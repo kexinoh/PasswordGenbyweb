@@ -9,3 +9,5 @@ A password generator only needs to be managed through offline web pages. (This m
 同时使用sha256作为密码增强，使得较为简单的密码也不会被字典攻击。
 
 它的安全性取决于你的主密钥，我们推荐至少使用8位以上的字符串。你可以为每个平台再设置一个子密钥，这样可以进一步提高安全性。
+
+访问通过：https://kexinoh.github.io/PasswordGenbyweb/
