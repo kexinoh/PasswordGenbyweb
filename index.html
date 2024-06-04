@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"> <!-- 设置编码为UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>密码生成器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        form {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            max-width: 390px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+            box-sizing: border-box; /* 确保padding包含在宽度内 */
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #outputPwd {
+            font-weight: bold;
+            margin-top: 15px;
+            display: inline-block;
+        }
+
+        #copyContainer {
+            display: none;
+            margin-top: 10px;
+        }
+        .copy-btn {
+            width: auto; /* 自动调整宽度 */
+            padding: 5px 10px; /* 减小按钮的大小 */
+            margin-left: 10px; /* 与生成的密码之间留空隙 */
+            background-color: #4CAF50; /* 绿色，代表成功/可以操作 */
+            color: white;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 14px;
+            border: none;
+        }
+
+        .copy-btn:hover {
+            background-color: #45a049; /* 悬浮时颜色变深 */
+        }
+    </style>
+    <!-- 引入crypto-js库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- 自定义的JavaScript代码 -->
+    <script>
+        // 这里再次包含之前的JavaScript代码
+        document.addEventListener('DOMContentLoaded', function () {
+            // ... 上述的JavaScript代码 ...
+            // 确保DOM加载完成后绑定事件和初始化
+            const corePwdInput = document.getElementById('corePwd');
+            const sonPwdInput = document.getElementById('sonPwd');
+
+            const userNameInput = document.getElementById('userName');
+            const registerPlatformInput = document.getElementById('registerPlatform');
+            const generateBtn = document.getElementById('generateBtn');
+            const outputPwd = document.getElementById('outputPwd');
+
+// 生成16位密码的函数
+            function generate16CharPassword(hash) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+                let result = '';
+                // 使用SHA-256哈希的前8个字节（16字符的十六进制表示）来“混合”结果，增加一些基于输入的随机性
+                const hashHex = CryptoJS.enc.Hex.stringify(hash).slice(0, 32);
+                for (let i = 0; i < 16; i++) {
+                    let decimalValue = parseInt(hashHex.substring(2 * i + 1, 2 * i + 2), 16) * 16 + parseInt(hashHex.substring(2 * i, 2 * i + 1), 16);
+
+                    result = result + chars[decimalValue % chars.length];
+                }
+                return result;
+            }
+
+            function generatePassword() {
+                const corePwd = corePwdInput.value;
+                const sonPwd= sonPwdInput.value;
+                const userName = userNameInput.value;
+                const registerPlatform = registerPlatformInput.value;
+
+                // 合并三个输入值并计算SHA-256
+                const combinedStr = corePwd + userName + registerPlatform+sonPwd;
+                const hash = CryptoJS.SHA256(combinedStr);
+
+                // 生成并显示16位密码
+                outputPwd.textContent = generate16CharPassword(hash);
+                document.getElementById('copyContainer').style.display = 'block';
+            }
+
+    document.getElementById('copyBtn').addEventListener('click', function () {
+        const textToCopy = document.getElementById('outputPwd').innerText;
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy)
+                .then(function () {
+                    alert('密码已复制到剪贴板！');
+                })
+                .catch(function (error) {
+                    console.error('无法复制到剪贴板:', error);
+                });
+        } else {
+            alert('当前浏览器不支持自动复制到剪贴板。');
+        }
+    });
+            generateBtn.addEventListener('click', generatePassword);
+        });
+    </script>
+</head>
+<body>
+<div>
+    <h1 style="text-align: center; margin-bottom: 20px;">密码生成器</h1>
+    <form>
+        <label for="corePwd">核心密码:</label>
+        <input type="password" id="corePwd" placeholder="切记保密">
+        <label for="sonPwd">子密码:</label>
+        <input type="password" id="sonPwd" placeholder="切记保密">
+        <label for="userName">用户名称:</label>
+        <input type="text" id="userName" placeholder="你的ID">
+        <label for="registerPlatform">注册平台:</label>
+<input type="text" id="registerPlatform" placeholder="也可以自己输入" list="platforms">
+<datalist id="platforms">
+    <option value="知乎">
+    <option value="微博">
+    <option value="小红书">
+    <option value="GitHub">
+    <option value="QQ">
+
+</datalist>
+        <button type="button" id="generateBtn">生成密码</button>
+    <p>生成的密码：<span id="outputPwd"></span></p>
+    <div id="copyContainer">
+<button type="button" class="copy-btn" id="copyBtn">复制密码</button>
+    </div>
+        <p>本页面由            <a href="https://www.github.com/kexoh/passwordgen/readme" target="_blank" style="color: #007BFF;">
+                KEXOH
+            </a>开发，并使用Github网页静态托管。</p>
+        <p>    核心密码是指一个核心的密码，要绝对保密。子密码你可以不设置</p>
+         <p>  用户名称是指你在该平台ID。
+           注册平台是指你希望使用密码的平台名称，比如知乎。</p>
+    </form>
+
+</div>
+</body>
+</html>
