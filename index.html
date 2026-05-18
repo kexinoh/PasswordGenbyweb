@@ -65,6 +65,68 @@
             display: none;
             margin-top: 10px;
         }
+
+        .iteration-control {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+
+        .iteration-control label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .iteration-control input[type="number"] {
+            width: 80px;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .password-list {
+            margin-top: 10px;
+        }
+
+        .password-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        .password-item .pwd-label {
+            font-size: 12px;
+            color: #888;
+            margin-right: 8px;
+            white-space: nowrap;
+        }
+
+        .password-item .pwd-text {
+            font-weight: bold;
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .password-item .copy-single-btn {
+            width: auto;
+            padding: 3px 8px;
+            margin-left: 8px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .password-item .copy-single-btn:hover {
+            background-color: #45a049;
+        }
         .copy-btn {
             width: auto; /* 自动调整宽度 */
             padding: 5px 10px; /* 减小按钮的大小 */
@@ -116,13 +178,56 @@
                 const sonPwd= sonPwdInput.value;
                 const userName = userNameInput.value;
                 const registerPlatform = registerPlatformInput.value;
+                const iterations = parseInt(document.getElementById('iterations').value) || 1;
 
                 // 合并三个输入值并计算SHA-256
                 const combinedStr = corePwd + userName + registerPlatform+sonPwd;
-                const hash = CryptoJS.SHA256(combinedStr);
+                let hash = CryptoJS.SHA256(combinedStr);
 
-                // 生成并显示16位密码
-                outputPwd.textContent = generate16CharPassword(hash);
+                // 清空密码列表
+                const passwordList = document.getElementById('passwordList');
+                passwordList.innerHTML = '';
+
+                // 根据迭代次数生成多个密码
+                for (let i = 0; i < iterations; i++) {
+                    if (i > 0) {
+                        // 使用上一次的hash作为输入进行迭代派生
+                        hash = CryptoJS.SHA256(CryptoJS.enc.Hex.stringify(hash));
+                    }
+
+                    const password = generate16CharPassword(hash);
+
+                    // 创建密码项
+                    const item = document.createElement('div');
+                    item.className = 'password-item';
+                    item.innerHTML = '<span class="pwd-label">#' + (i + 1) + '</span>' +
+                        '<span class="pwd-text">' + password + '</span>' +
+                        '<button type="button" class="copy-single-btn" data-pwd="' + password + '">复制</button>';
+                    passwordList.appendChild(item);
+                }
+
+                // 为所有复制按钮绑定事件
+                passwordList.querySelectorAll('.copy-single-btn').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        const pwd = this.getAttribute('data-pwd');
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(pwd).then(function() {
+                                alert('密码已复制到剪贴板！');
+                            }).catch(function(error) {
+                                console.error('无法复制到剪贴板:', error);
+                            });
+                        } else {
+                            alert('当前浏览器不支持自动复制到剪贴板。');
+                        }
+                    });
+                });
+
+                // 如果只有一个密码，也在原位置显示
+                if (iterations === 1) {
+                    outputPwd.textContent = passwordList.querySelector('.pwd-text').textContent;
+                } else {
+                    outputPwd.textContent = '共生成 ' + iterations + ' 个密码';
+                }
                 document.getElementById('copyContainer').style.display = 'block';
             }
 
@@ -164,8 +269,13 @@
     <option value="QQ">
 
 </datalist>
+        <div class="iteration-control">
+            <label for="iterations">迭代次数:</label>
+            <input type="number" id="iterations" value="1" min="1" max="20" step="1">
+        </div>
         <button type="button" id="generateBtn">生成密码</button>
     <p>生成的密码：<span id="outputPwd"></span></p>
+    <div id="passwordList" class="password-list"></div>
     <div id="copyContainer">
 <button type="button" class="copy-btn" id="copyBtn">复制密码</button>
     </div>
